@@ -1,4 +1,6 @@
 configfile: "config.yaml"
+import os
+import pandas as pd
 transcriptome = config['transcriptome']
 transcriptome_name = os.path.splitext(os.path.basename(transcriptome))[0]
 output_folder = os.path.join(
@@ -11,8 +13,8 @@ index = os.path.join(
 	f"{transcriptome_name}_index"
 )
 samples_csv = config['samples']
-import os
-import pandas as pd
+fastqs_dir = os.path.dirname(samples_csv)
+
 df = pd.read_csv(samples_csv)
 RUNS = df['Run'].tolist()
 
@@ -38,8 +40,8 @@ rule create_index:
 rule quantify_with_salmon:
 	input: 
 		index = index, 
-		run_1 = "/home/charlie/big_data/salmon_fastq/{current_run}_1.fastq",
-		run_2 = "/home/charlie/big_data/salmon_fastq/{current_run}_2.fastq"
+		run_1 = os.path.join(fastqs_dir, "{current_run}_1.fastq"),
+		run_2 = os.path.join(fastqs_dir, "{current_run}_2.fastq")
 	output: quantified_run = directory(os.path.join(output_folder, "quants", "{current_run}"))
 	shell:
 		'''
