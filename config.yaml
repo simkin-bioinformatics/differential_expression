@@ -2,8 +2,8 @@ experiment_id: PRJNA880828
 
 # input files
 samples: /home/charlie/big_data/difex_data/experiment_fastqs/PRJNA880828/samples.csv
-transcriptome: /home/charlie/big_data/difex_data/transcriptomes/mus_te_from_dfam.fa
-tx2gene: /home/charlie/big_data/difex_data/transcriptomes/mus_te_from_dfam_tx2gene.csv
+transcriptome: /home/charlie/big_data/difex_data/transcriptomes/seqNcbiRefSeq.rna.fa
+tx2gene: /home/charlie/big_data/difex_data/transcriptomes/seqNcbiRefSeq.rna_tx2gene.csv
 
 # output directory
 output_folder: output
