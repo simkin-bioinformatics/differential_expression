@@ -2,12 +2,24 @@ experiment_id: PRJNA880828
 
 # input files
 samples: /home/charlie/big_data/difex_data/experiment_fastqs/PRJNA880828/samples.csv
-transcriptome: /home/charlie/big_data/difex_data/transcriptomes/seqNcbiRefSeq.rna.fa
-tx2gene: /home/charlie/big_data/difex_data/transcriptomes/seqNcbiRefSeq.rna_tx2gene.csv
-
+transcriptome: /home/charlie/big_data/difex_data/transcriptomes/mus_te_from_dfam_uncombined.fa
+tx2gene: /home/charlie/big_data/difex_data/transcriptomes/mus_te_from_dfam_uncombined_tx2gene.csv
 # output directory
 output_folder: output
 
-# reference vs comparison
-reference: SI07
-comparison: KI07
+# comparisons to make
+comparisons:
+  - KI03_vs_SI03
+  - KC03_vs_SC03
+  - KI07_vs_SI07
+  - KC07_vs_SC07
+  - KI14_vs_SI14
+  - KC14_vs_SC14
+
+p-value_cutoff: 0.05
+
+genes_or_te_of_interest:
+  - Arc
+  - B2_Mm1t
+  - IAPEY4_I
+

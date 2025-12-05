@@ -1,6 +1,7 @@
 configfile: "config.yaml"
 import os
 import pandas as pd
+import ast
 transcriptome = config['transcriptome']
 transcriptome_name = os.path.splitext(os.path.basename(transcriptome))[0]
 output_folder = os.path.join(
@@ -8,7 +9,7 @@ output_folder = os.path.join(
 	f"{config['experiment_id']}_vs_{transcriptome_name}"
 )
 index = os.path.join(
-	output_folder, 
+	config['output_folder'],
 	"salmon_indices",
 	f"{transcriptome_name}_index"
 )
@@ -18,17 +19,17 @@ fastqs_dir = os.path.dirname(samples_csv)
 df = pd.read_csv(samples_csv)
 RUNS = df['Run'].tolist()
 
-reference = config['reference']
-comparison = config['comparison']
-
-print(reference)
-print(comparison)
+# reference = config['reference']
+comparisons = config['comparisons']
+# print(reference)
+# print(comparison)
 print(transcriptome)
 
 rule all:
 	input: 
-		difex = os.path.join(output_folder, f"{reference}_vs_{comparison}_deseq.csv"),
-		copied_config = os.path.join(output_folder, "config.yaml")
+		copied_config = os.path.join(output_folder, "config.yaml"),
+		gene_summary = os.path.join(output_folder, "significant_change_summaries", "full_summary.csv"),
+		filtered_gene_summary = os.path.join(output_folder, "significant_change_summaries", "filtered_summary.csv")
 		
 
 rule create_index:
@@ -42,7 +43,7 @@ rule quantify_with_salmon:
 		index = index, 
 		run_1 = os.path.join(fastqs_dir, "{current_run}_1.fastq"),
 		run_2 = os.path.join(fastqs_dir, "{current_run}_2.fastq")
-	output: quantified_run = directory(os.path.join(output_folder, "quants", "{current_run}"))
+	output: quant = directory(os.path.join(output_folder, "salmon_quants", "{current_run}"))
 	shell:
 		'''
 			salmon quant -i {input.index} \
@@ -52,30 +53,42 @@ rule quantify_with_salmon:
 			-p 8 \
 			--validateMappings \
 			--gcBias \
-			-o "{output.quantified_run}"
+			-o "{output.quant}"
 		'''
 
 rule run_deseq2:
 	input:
 		quantified_runs = expand(
-			os.path.join(output_folder, "quants", "{current_run}"), 
+			os.path.join(output_folder, "salmon_quants", "{current_run}"), 
 			current_run = RUNS
 		),
 		transcriptome = transcriptome,
 		tx2gene = config['tx2gene'],
 		samples_csv = samples_csv,
 	output:
-		difex = os.path.join(output_folder, f"{reference}_vs_{comparison}_deseq.csv")
+		difex = os.path.join(output_folder, "deseq_output", "{comparison}"+"_deseq.csv")
 	params:
 		output_folder = output_folder,
 		RUNS = RUNS,
-		reference = reference,
-		comparison = comparison,
+		comparison = lambda wildcards: wildcards.comparison,
+		reference = lambda wildcards: wildcards.comparison.split('_')[-1]
 	script:
 		"scripts/run_deseq2.R"
+
+rule summarize_genes_of_interest:
+	input:
+		difex = expand(os.path.join(output_folder, "deseq_output", "{comparison}"+"_deseq.csv"), comparison = comparisons),
+	output:
+		gene_summary = os.path.join(output_folder, "significant_change_summaries", "full_summary.csv"),
+		filtered_gene_summary = os.path.join(output_folder, "significant_change_summaries", "filtered_summary.csv")
+	params:
+		genes_of_interest = config['genes_or_te_of_interest'],
+		p_val = config['p-value_cutoff']
+	script:
+		"scripts/summarize_te.py"
 
 rule copy_config:
 	output:
 		copied_config = os.path.join(output_folder, "config.yaml")
 	shell:
-		"cp config.yaml {output.copied_config}"
+		"cp -f config.yaml {output.copied_config}"

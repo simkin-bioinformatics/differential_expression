@@ -7,7 +7,7 @@ TRANSCRIPTOME <- snakemake@input[['transcriptome']]
 samples <- read.csv(snakemake@input[['samples_csv']], header=TRUE)
 RUNS <- snakemake@params[['RUNS']]
 output_folder <- snakemake@params[['output_folder']]
-files <- file.path(output_folder, "quants", RUNS, "quant.sf")
+files <- file.path(output_folder, "salmon_quants", RUNS, "quant.sf")
 tx2gene <- read.csv(snakemake@input[['tx2gene']])
 
 # import salmon quant data
@@ -17,9 +17,10 @@ ddsTxi <- DESeqDataSetFromTximport(txi,
                                    design = ~ condition)
 
 # relevel based on chosen reference
-reference <- snakemake@params[['reference']]
 comparison <- snakemake@params[['comparison']]
-name <- paste0("condition_", comparison, "_vs_", reference)
+reference <- snakemake@params[['reference']]
+
+name <- paste0("condition_", comparison)
 ddsTxi$condition <- relevel(ddsTxi$condition, ref = reference)
 dds <- DESeq(ddsTxi)
 
@@ -30,9 +31,9 @@ res <- results(dds, name=name)
 resLFC <- lfcShrink(dds, coef=name, type="apeglm")
 
 # order the results
-resOrdered <- resLFC[order(res$pvalue),]
+resOrdered <- resLFC[order(resLFC$pvalue),]
+arc_summary <- resOrdered['Arc',]
+# rownames(arc_summary)['Arc'] <- name
 
 # write results to csv
 write.csv(resOrdered, snakemake@output[['difex']], row.names = TRUE)
-
-
