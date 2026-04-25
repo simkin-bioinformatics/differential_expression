@@ -1,0 +1,25 @@
+experiment_id: PRJNA880828
+
+# input files
+samples: /home/charlie/data/PRJNA880828/samples.csv
+transcriptome: /home/charlie/data/ncbi_GCF_000001635.27_GRCm39/GCF_000001635.27_GRCm39_rna.fna
+tx2gene: /home/charlie/data/ncbi_GCF_000001635.27_GRCm39/GCF_000001635.27_GRCm39_rna_tx2gene.tsv
+# output directory
+output_folder: results
+
+# comparisons to make
+comparisons:
+  - KI03_vs_SI03
+  - KC03_vs_SC03
+  - KI07_vs_SI07
+  - KC07_vs_SC07
+  - KI14_vs_SI14
+  - KC14_vs_SC14
+
+p-value_cutoff: 0.05
+
+genes_or_te_of_interest:
+  - Arc
+  - B2_Mm1t
+  - IAPEY4_I
+
