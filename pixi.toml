@@ -1,0 +1,23 @@
+[workspace]
+authors = ["Charlie Simkin <charlie.simkin@gmail.com>"]
+channels = ["conda-forge", "bioconda", "r"]
+name = "differential_expression"
+platforms = ["osx-arm64", "linux-64"]
+version = "0.1.0"
+
+[tasks]
+download_runs = "snakemake -s workflow/download_runs.smk -c all"
+differential_expression = "snakemake -c all"
+
+[dependencies]
+salmon = ">=1.11.4,<2"
+bioconductor-deseq2 = ">=1.50.2,<2"
+bioconductor-tximport = ">=1.38.2,<2"
+bioconductor-apeglm = ">=1.32.0,<2"
+r-readr = ">=2.2.0,<3"
+r-yaml = ">=2.3.12,<3"
+snakemake = ">=9.19.0,<10"
+pandas = ">=2.3.3,<3"
+sra-tools = ">=3.4.1,<4"
+pigz = ">=2.8,<3"
+r-base = ">=4.5.2,<4.6"
