@@ -1,20 +1,13 @@
 configfile: "config/config.yaml"
-import os
 import pandas as pd
 import ast
+from pathlib import Path
 transcriptome = config['transcriptome']
-transcriptome_name = os.path.splitext(os.path.basename(transcriptome))[0]
-output_folder = os.path.join(
-	config['output_folder'], 
-	f"{config['experiment_id']}_vs_{transcriptome_name}"
-)
-index = os.path.join(
-	config['output_folder'],
-	"salmon_indices",
-	f"{transcriptome_name}_index"
-)
+transcriptome_name = Path(transcriptome).stem
+output_folder = Path(config['output_folder']) / f"{config['experiment_id']}_vs_{transcriptome_name}"
+index = Path(config['output_folder']) / "salmon_indices" / f"{transcriptome_name}_index"
 samples_csv = config['samples']
-fastqs_dir = os.path.dirname(samples_csv)
+fastqs_dir = Path(samples_csv).parent
 
 df = pd.read_csv(samples_csv)
 RUNS = df['Run'].tolist()
@@ -23,9 +16,9 @@ comparisons = config['comparisons']
 
 rule all:
 	input: 
-		copied_config = os.path.join(output_folder, "config.yaml"),
-		gene_summary = os.path.join(output_folder, "significant_change_summaries", "full_summary.csv"),
-		filtered_gene_summary = os.path.join(output_folder, "significant_change_summaries", "filtered_summary.csv")
+		copied_config = output_folder / "config.yaml",
+		gene_summary = output_folder / "significant_change_summaries" / "full_summary.csv",
+		filtered_gene_summary = output_folder / "significant_change_summaries" / "filtered_summary.csv"
 		
 
 rule create_index:
@@ -37,10 +30,10 @@ rule create_index:
 
 rule quantify_with_salmon:
 	input: 
-		index = index, 
-		run_1 = os.path.join(fastqs_dir, "{current_run}_1.fastq.gz"),
-		run_2 = os.path.join(fastqs_dir, "{current_run}_2.fastq.gz")
-	output: quant = directory(os.path.join(output_folder, "salmon_quants", "{current_run}"))
+		index = index,
+		run_1 = fastqs_dir / "{current_run}_1.fastq.gz",
+		run_2 = fastqs_dir / "{current_run}_2.fastq.gz"
+	output: quant = directory(output_folder / "salmon_quants" / "{current_run}")
 	threads: 8
 	shell:
 		'''
@@ -56,14 +49,11 @@ rule quantify_with_salmon:
 
 rule run_deseq2:
 	input:
-		quantified_runs = expand(
-			os.path.join(output_folder, "salmon_quants", "{current_run}"), 
-			current_run = RUNS
-		),
+		quantified_runs = expand(output_folder / "salmon_quants" / "{current_run}", current_run = RUNS),
 		tx2gene = config['tx2gene'],
-		samples_csv = samples_csv,
+		samples_csv = samples_csv
 	output:
-		difex = os.path.join(output_folder, "deseq_output", "{comparison}"+"_deseq.csv")
+		difex = output_folder / "deseq_output" / f"{{comparison}}_deseq.csv"
 	params:
 		output_folder = output_folder,
 		RUNS = RUNS,
@@ -74,10 +64,10 @@ rule run_deseq2:
 
 rule summarize_genes_of_interest:
 	input:
-		difex = expand(os.path.join(output_folder, "deseq_output", "{comparison}"+"_deseq.csv"), comparison = comparisons),
+		difex = expand(output_folder / "deseq_output" / f"{{comparison}}_deseq.csv", comparison = comparisons),
 	output:
-		gene_summary = os.path.join(output_folder, "significant_change_summaries", "full_summary.csv"),
-		filtered_gene_summary = os.path.join(output_folder, "significant_change_summaries", "filtered_summary.csv")
+		gene_summary = output_folder / "significant_change_summaries" / "full_summary.csv",
+		filtered_gene_summary = output_folder / "significant_change_summaries" / "filtered_summary.csv"
 	params:
 		genes_of_interest = config['genes_or_te_of_interest'],
 		p_val = config['p-value_cutoff']
@@ -86,6 +76,6 @@ rule summarize_genes_of_interest:
 
 rule copy_config:
 	output:
-		copied_config = os.path.join(output_folder, "config.yaml")
+		copied_config = output_folder / "config.yaml"
 	shell:
 		"cp -f config/config.yaml {output.copied_config}"
