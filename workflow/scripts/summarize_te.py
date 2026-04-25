@@ -25,7 +25,3 @@ for file in files:
 
 df = pd.DataFrame.from_dict(all_significant_TE, orient='index')
 df.to_csv(snakemake.output.gene_summary, index = True)
-
-# create a filtered dataframe of only the TE/genes of interest
-filtered_df = df[df.index.isin(snakemake.params.genes_of_interest)]
-filtered_df.to_csv(snakemake.output.filtered_gene_summary, index = True)

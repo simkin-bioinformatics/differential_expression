@@ -8,6 +8,10 @@ output_folder = Path(config['output_folder']) / f"{config['experiment_id']}_vs_{
 index = Path(config['output_folder']) / "salmon_indices" / f"{transcriptome_name}_index"
 samples_csv = config['samples']
 fastqs_dir = Path(samples_csv).parent
+combined_summary = Path(config['output_folder']) / "combined_significant_change_summaries.csv"
+filtered_combined_summary = Path(config['output_folder']) / "combined_significant_change_summaries_filtered.csv"
+combined_summary.unlink(missing_ok=True)
+filtered_combined_summary.unlink(missing_ok=True)
 
 df = pd.read_csv(samples_csv)
 RUNS = df['Run'].tolist()
@@ -16,10 +20,10 @@ comparisons = config['comparisons']
 
 rule all:
 	input: 
-		copied_config = output_folder / "config.yaml",
-		gene_summary = output_folder / "significant_change_summaries" / "full_summary.csv",
-		filtered_gene_summary = output_folder / "significant_change_summaries" / "filtered_summary.csv"
-		
+		copied_config = directory(output_folder / "config"),
+		copied_workflow = directory(output_folder / "workflow"),
+		combined_summary = combined_summary,
+		filtered_combined_summary = filtered_combined_summary
 
 rule create_index:
 	input: transcriptome = transcriptome
@@ -66,16 +70,31 @@ rule summarize_genes_of_interest:
 	input:
 		difex = expand(output_folder / "deseq_output" / f"{{comparison}}_deseq.csv", comparison = comparisons),
 	output:
-		gene_summary = output_folder / "significant_change_summaries" / "full_summary.csv",
-		filtered_gene_summary = output_folder / "significant_change_summaries" / "filtered_summary.csv"
+		gene_summary = output_folder / "significant_change_summary.csv",
 	params:
 		genes_of_interest = config['genes_or_te_of_interest'],
 		p_val = config['p-value_cutoff']
 	script:
 		"scripts/summarize_te.py"
 
+rule combine_summaries:
+	input:
+		gene_summary = output_folder / "significant_change_summary.csv",
+	output:
+		combined_summary = combined_summary,
+		filtered_combined_summary = filtered_combined_summary
+	run:
+		summaries = []
+		for path in Path('.').rglob('significant_change_summary.csv'):
+			summaries.append(pd.read_csv(path, index_col=0))
+		combined_summary = pd.concat(summaries)
+		filtered_combined_summary = combined_summary[combined_summary.index.isin(config['genes_or_te_of_interest'])]
+		combined_summary.to_csv(output.combined_summary, index=True)
+		filtered_combined_summary.to_csv(output.filtered_combined_summary, index=True)
+
 rule copy_config:
 	output:
-		copied_config = output_folder / "config.yaml"
+		copied_config = directory(output_folder / "config"),
+		copied_workflow = directory(output_folder / "workflow")
 	shell:
-		"cp -f config/config.yaml {output.copied_config}"
+		"rsync -a config/ {output.copied_config} && rsync -a workflow/ {output.copied_workflow}"

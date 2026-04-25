@@ -2,8 +2,9 @@ experiment_id: PRJNA880828
 
 # input files
 samples: /home/charlie/data/PRJNA880828/samples.csv
-transcriptome: /home/charlie/data/dfam/mus_entries_in_dfam_3.9/mus_uncombined.fa
-tx2gene: /home/charlie/data/dfam/mus_entries_in_dfam_3.9/mus_uncombined_tx2gene.tsv
+transcriptome: /home/charlie/data/ncbi_GCF_000001635.27_GRCm39/GCF_000001635.27_GRCm39_rna.fna
+tx2gene: /home/charlie/data/ncbi_GCF_000001635.27_GRCm39/GCF_000001635.27_GRCm39_rna_tx2gene.tsv
+
 # output directory
 output_folder: results
 
