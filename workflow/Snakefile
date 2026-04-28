@@ -26,7 +26,7 @@ rule all:
 		filtered_combined_summary = filtered_combined_summary
 
 rule create_index:
-	input: transcriptome = transcriptome
+	input: transcriptome = "{transcriptome}"
 	output: index = directory(index)
 	threads: 12
 	shell:

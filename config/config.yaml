@@ -24,3 +24,10 @@ genes_or_te_of_interest:
   - B2_Mm1t
   - IAPEY4_I
 
+transcriptomes:
+  mus_dfam:
+    transcriptome_path: /home/charlie/data/dfam/mus_entries_in_dfam_3.9/mus_uncombined.fa
+    tx2gene_path: /home/charlie/data/dfam/mus_entries_in_dfam_3.9/mus_uncombined_tx2gene.tsv
+  GRCm39:
+    transcriptome_path: /home/charlie/data/ncbi_GCF_000001635.27_GRCm39/GCF_000001635.27_GRCm39_rna.fna
+    tx2gene_path: /home/charlie/data/ncbi_GCF_000001635.27_GRCm39/GCF_000001635.27_GRCm39_rna_tx2gene.tsv
